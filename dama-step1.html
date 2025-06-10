@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dama - Step 1: Scacchiera</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+        }
+        
+        canvas {
+            border: 2px solid #333;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .description {
+            margin-top: 20px;
+            max-width: 600px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dama - Step 1: Scacchiera</h1>
+    <canvas id="checkerboard" width="500" height="500"></canvas>
+    
+    <div class="description">
+        <h3>Funzionalità implementate:</h3>
+        <ul>
+            <li>Disegno della scacchiera 8x8 con caselle alternate</li>
+            <li>Implementazione della struttura dati per rappresentare la scacchiera</li>
+        </ul>
+        <p>Questo è il primo step del progetto della dama. Qui viene creata solo la scacchiera vuota.</p>
+    </div>
+    
+    <script>
+        // Riferimenti agli elementi DOM
+        const canvas = document.getElementById('checkerboard');
+        const ctx = canvas.getContext('2d');
+
+        // Costanti del gioco
+        const BOARD_SIZE = 8;
+        const SQUARE_SIZE = canvas.width / BOARD_SIZE;
+
+        // Stato del gioco
+        let gameState = {
+            board: [] // Matrice 8x8 che rappresenta la scacchiera
+        };
+
+        // Inizializzazione del gioco
+        function initGame() {
+            initBoard();
+            drawBoard();
+        }
+
+        // Step 1: Inizializzazione della scacchiera
+        function initBoard() {
+            gameState.board = [];
+            
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                gameState.board[row] = [];
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    gameState.board[row][col] = null; // Inizialmente tutte le caselle sono vuote
+                }
+            }
+        }
+
+        // Step 1: Disegno della scacchiera
+        function drawBoard() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    // Determina il colore della casella (alternando bianco e nero)
+                    const isLightSquare = (row + col) % 2 === 0;
+                    ctx.fillStyle = isLightSquare ? '#EBECD0' : '#779556';
+                    
+                    // Disegna la casella
+                    ctx.fillRect(col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+                }
+            }
+        }
+
+        // Inizializza il gioco
+        initGame();
+    </script>
+</body>
+</html>

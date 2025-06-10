@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dama - Step 4: Mosse Base</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+        }
+        
+        canvas {
+            border: 2px solid #333;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .game-info {
+            margin-top: 20px;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            width: 500px;
+        }
+        
+        .controls {
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .description {
+            margin-top: 20px;
+            max-width: 600px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dama - Step 4: Mosse Base</h1>
+    <canvas id="checkerboard" width="500" height="500"></canvas>
+    
+    <div class="game-info">
+        <div>Turno: <span id="currentPlayer">Bianco</span></div>
+        <div>Pedine Bianche: <span id="whitePieces">12</span></div>
+        <div>Pedine Nere: <span id="blackPieces">12</span></div>
+    </div>
+    
+    <div class="controls">
+        <button id="newGameBtn">Nuova Partita</button>
+    </div>
+    
+    <div class="description">
+        <h3>Funzionalità implementate:</h3>
+        <ul>
+            <li>Disegno della scacchiera 8x8 con caselle alternate</li>
+            <li>Posizionamento iniziale delle pedine bianche e nere</li>
+            <li>Implementazione della selezione delle pedine</li>
+            <li>Calcolo delle mosse valide per una pedina selezionata</li>
+            <li>Evidenziazione delle caselle di destinazione valide</li>
+            <li>Implementazione dello spostamento delle pedine</li>
+        </ul>
+        <p>Seleziona una pedina del tuo colore e poi clicca su una delle caselle verdi per muoverla.</p>
+    </div>
+    
+    <script>
+        // Riferimenti agli elementi DOM
+        const canvas = document.getElementById('checkerboard');
+        const ctx = canvas.getContext('2d');
+        const currentPlayerElement = document.getElementById('currentPlayer');
+        const whitePiecesElement = document.getElementById('whitePieces');
+        const blackPiecesElement = document.getElementById('blackPieces');
+        const newGameBtn = document.getElementById('newGameBtn');
+
+        // Costanti del gioco
+        const BOARD_SIZE = 8;
+        const SQUARE_SIZE = canvas.width / BOARD_SIZE;
+        const WHITE = 'white';
+        const BLACK = 'black';
+
+        // Stato del gioco
+        let gameState = {
+            board: [], // Matrice 8x8 che rappresenta la scacchiera
+            currentPlayer: WHITE,
+            selectedPiece: null,
+            validMoves: []
+        };
+
+        // Inizializzazione del gioco
+        function initGame() {
+            initBoard();
+            placePieces();
+            drawBoard();
+            updateGameInfo();
+        }
+
+        // Step 1: Inizializzazione della scacchiera
+        function initBoard() {
+            gameState.board = [];
+            
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                gameState.board[row] = [];
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    gameState.board[row][col] = null; // Inizialmente tutte le caselle sono vuote
+                }
+            }
+        }
+
+        // Step 2: Posizionamento delle pedine iniziali
+        function placePieces() {
+            // Posiziona le pedine nere (nelle prime 3 righe)
+            for (let row = 0; row < 3; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    // Posiziona le pedine solo sulle caselle nere (somma di riga e colonna dispari)
+                    if ((row + col) % 2 === 1) {
+                        gameState.board[row][col] = { color: BLACK, isKing: false };
+                    }
+                }
+            }
+            
+            // Posiziona le pedine bianche (nelle ultime 3 righe)
+            for (let row = 5; row < 8; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    // Posiziona le pedine solo sulle caselle nere (somma di riga e colonna dispari)
+                    if ((row + col) % 2 === 1) {
+                        gameState.board[row][col] = { color: WHITE, isKing: false };
+                    }
+                }
+            }
+        }
+
+        // Step 1: Disegno della scacchiera
+        function drawBoard() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    // Determina il colore della casella (alternando bianco e nero)
+                    const isLightSquare = (row + col) % 2 === 0;
+                    ctx.fillStyle = isLightSquare ? '#EBECD0' : '#779556';
+                    
+                    // Disegna la casella
+                    ctx.fillRect(col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+                    
+                    // Disegna la pedina se presente
+                    if (gameState.board[row][col]) {
+                        drawPiece(row, col);
+                    }
+                }
+            }
+            
+            // Se c'è una pedina selezionata, evidenziala
+            if (gameState.selectedPiece) {
+                highlightSelectedPiece();
+            }
+            
+            // Se ci sono mosse valide, evidenziale
+            if (gameState.validMoves.length > 0) {
+                highlightValidMoves();
+            }
+        }
+
+        // Step 2: Disegno di una singola pedina
+        function drawPiece(row, col) {
+            const piece = gameState.board[row][col];
+            if (!piece) return;
+            
+            const x = col * SQUARE_SIZE + SQUARE_SIZE / 2;
+            const y = row * SQUARE_SIZE + SQUARE_SIZE / 2;
+            const radius = SQUARE_SIZE * 0.4;
+            
+            // Disegna il cerchio della pedina
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = piece.color;
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Se è una dama (re), disegna un simbolo o un cerchio più piccolo
+            if (piece.isKing) {
+                ctx.beginPath();
+                ctx.arc(x, y, radius * 0.5, 0, Math.PI * 2);
+                ctx.fillStyle = piece.color === WHITE ? '#ccc' : '#333';
+                ctx.fill();
+                ctx.strokeStyle = '#000';
+                ctx.stroke();
+            }
+        }
+
+        // Step 3: Evidenzia la pedina selezionata
+        function highlightSelectedPiece() {
+            const { row, col } = gameState.selectedPiece;
+            const x = col * SQUARE_SIZE + SQUARE_SIZE / 2;
+            const y = row * SQUARE_SIZE + SQUARE_SIZE / 2;
+            
+            ctx.beginPath();
+            ctx.arc(x, y, SQUARE_SIZE * 0.45, 0, Math.PI * 2);
+            ctx.strokeStyle = 'yellow';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        // Step 4: Evidenzia le mosse valide
+        function highlightValidMoves() {
+            gameState.validMoves.forEach(move => {
+                const x = move.col * SQUARE_SIZE + SQUARE_SIZE / 2;
+                const y = move.row * SQUARE_SIZE + SQUARE_SIZE / 2;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, SQUARE_SIZE * 0.3, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
+                ctx.fill();
+            });
+        }
+
+        // Step 3: Gestione del click sulla scacchiera
+        function handleBoardClick(event) {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            // Converti le coordinate del mouse in indici di riga e colonna
+            const col = Math.floor(x / SQUARE_SIZE);
+            const row = Math.floor(y / SQUARE_SIZE);
+            
+            // Ottieni la pedina nella casella cliccata
+            const piece = gameState.board[row][col];
+            
+            // Se c'è già una pedina selezionata
+            if (gameState.selectedPiece) {
+                // Controlla se il click è su una mossa valida
+                const validMove = gameState.validMoves.find(move => move.row === row && move.col === col);
+                
+                if (validMove) {
+                    // Esegui la mossa
+                    makeMove(validMove);
+                    drawBoard();
+                    return;
+                }
+                
+                // Se il click non è su una mossa valida, deseleziona la pedina
+                gameState.selectedPiece = null;
+                gameState.validMoves = [];
+                drawBoard();
+                
+                // Se il click è su un'altra pedina del giocatore corrente, selezionala
+                if (piece && piece.color === gameState.currentPlayer) {
+                    handlePieceSelection(row, col);
+                }
+                
+                return;
+            }
+            
+            // Se non c'è una pedina selezionata, seleziona una pedina se il click è su una pedina del giocatore corrente
+            if (piece && piece.color === gameState.currentPlayer) {
+                handlePieceSelection(row, col);
+            }
+        }
+
+        // Step 3: Gestione della selezione di una pedina
+        function handlePieceSelection(row, col) {
+            const piece = gameState.board[row][col];
+            
+            // Verifica se c'è una pedina nella casella e se appartiene al giocatore corrente

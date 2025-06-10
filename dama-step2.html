@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dama - Step 2: Pedine</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+        }
+        
+        canvas {
+            border: 2px solid #333;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .game-info {
+            margin-top: 20px;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            width: 500px;
+        }
+        
+        .description {
+            margin-top: 20px;
+            max-width: 600px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dama - Step 2: Pedine</h1>
+    <canvas id="checkerboard" width="500" height="500"></canvas>
+    
+    <div class="game-info">
+        <div>Pedine Bianche: <span id="whitePieces">12</span></div>
+        <div>Pedine Nere: <span id="blackPieces">12</span></div>
+    </div>
+    
+    <div class="description">
+        <h3>Funzionalità implementate:</h3>
+        <ul>
+            <li>Disegno della scacchiera 8x8 con caselle alternate</li>
+            <li>Posizionamento iniziale delle pedine bianche e nere</li>
+            <li>Disegno delle pedine sulla scacchiera</li>
+        </ul>
+        <p>In questo step vengono aggiunte le pedine sulla scacchiera, ma non è ancora possibile interagire con esse.</p>
+    </div>
+    
+    <script>
+        // Riferimenti agli elementi DOM
+        const canvas = document.getElementById('checkerboard');
+        const ctx = canvas.getContext('2d');
+        const whitePiecesElement = document.getElementById('whitePieces');
+        const blackPiecesElement = document.getElementById('blackPieces');
+
+        // Costanti del gioco
+        const BOARD_SIZE = 8;
+        const SQUARE_SIZE = canvas.width / BOARD_SIZE;
+        const WHITE = 'white';
+        const BLACK = 'black';
+
+        // Stato del gioco
+        let gameState = {
+            board: [] // Matrice 8x8 che rappresenta la scacchiera
+        };
+
+        // Inizializzazione del gioco
+        function initGame() {
+            initBoard();
+            placePieces();
+            drawBoard();
+            updateGameInfo();
+        }
+
+        // Step 1: Inizializzazione della scacchiera
+        function initBoard() {
+            gameState.board = [];
+            
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                gameState.board[row] = [];
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    gameState.board[row][col] = null; // Inizialmente tutte le caselle sono vuote
+                }
+            }
+        }
+
+        // Step 2: Posizionamento delle pedine iniziali
+        function placePieces() {
+            // Posiziona le pedine nere (nelle prime 3 righe)
+            for (let row = 0; row < 3; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    // Posiziona le pedine solo sulle caselle nere (somma di riga e colonna dispari)
+                    if ((row + col) % 2 === 1) {
+                        gameState.board[row][col] = { color: BLACK, isKing: false };
+                    }
+                }
+            }
+            
+            // Posiziona le pedine bianche (nelle ultime 3 righe)
+            for (let row = 5; row < 8; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    // Posiziona le pedine solo sulle caselle nere (somma di riga e colonna dispari)
+                    if ((row + col) % 2 === 1) {
+                        gameState.board[row][col] = { color: WHITE, isKing: false };
+                    }
+                }
+            }
+        }
+
+        // Step 1: Disegno della scacchiera
+        function drawBoard() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    // Determina il colore della casella (alternando bianco e nero)
+                    const isLightSquare = (row + col) % 2 === 0;
+                    ctx.fillStyle = isLightSquare ? '#EBECD0' : '#779556';
+                    
+                    // Disegna la casella
+                    ctx.fillRect(col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+                    
+                    // Disegna la pedina se presente
+                    if (gameState.board[row][col]) {
+                        drawPiece(row, col);
+                    }
+                }
+            }
+        }
+
+        // Step 2: Disegno di una singola pedina
+        function drawPiece(row, col) {
+            const piece = gameState.board[row][col];
+            if (!piece) return;
+            
+            const x = col * SQUARE_SIZE + SQUARE_SIZE / 2;
+            const y = row * SQUARE_SIZE + SQUARE_SIZE / 2;
+            const radius = SQUARE_SIZE * 0.4;
+            
+            // Disegna il cerchio della pedina
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = piece.color;
+            ctx.fill();
+            ctx.strokeStyle = piece.color === WHITE ? '#000' : '#666';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        // Aggiorna le informazioni di gioco (numero di pedine)
+        function updateGameInfo() {
+            // Conta le pedine
+            let whitePieces = 0;
+            let blackPieces = 0;
+            
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    const piece = gameState.board[row][col];
+                    if (piece) {
+                        if (piece.color === WHITE) {
+                            whitePieces++;
+                        } else {
+                            blackPieces++;
+                        }
+                    }
+                }
+            }
+            
+            whitePiecesElement.textContent = whitePieces;
+            blackPiecesElement.textContent = blackPieces;
+        }
+
+        // Inizializza il gioco
+        initGame();
+    </script>
+</body>
+</html>
